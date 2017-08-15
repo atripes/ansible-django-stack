@@ -1,5 +1,8 @@
 ---
 
+# Base Settings
+remote_pip_user: vagrant
+
 # Git settings.
 setup_git_repo: no
 git_branch: develop
