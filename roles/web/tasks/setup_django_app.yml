@@ -1,5 +1,25 @@
 ---
 
+- name: Create keyfile for git clone
+  copy: content="{{ item.src }}" dest=/home/ubuntu/.ssh/{{ item.dest }}
+  no_log: True
+  with_items:
+    - {src: "{{ ubuntu_rsa_pub }}", dest: 'id_rsa.pub'}
+    - {src: "{{ ubuntu_rsa_priv }}", dest: 'id_rsa'}
+
+- name:  Create .ssh folder in server_user
+  file: path=/home/ubuntu/.ssh state=directory owner=ubuntu group=ubuntu mode=0700
+
+- name: Whitelist 192.168.1.12
+  shell: if [ ! -n "$(grep "^192.168.1.12 " /home/ubuntu/.ssh/known_hosts)" ]; then ssh-keyscan 192.168.1.12 >> /home/ubuntu/.ssh/known_hosts 2>/dev/null; fi
+
+- shell: python --version
+  register: debugmsg
+
+- debug: 
+    var: debugmsg
+    verbosity: 2
+
 - name: Install packages required by the Django app inside virtualenv
   pip: virtualenv={{ virtualenv_path }} requirements={{ requirements_file }}
 
@@ -13,23 +33,23 @@
   when: run_django_syncdb is defined and run_django_syncdb
   tags: django.syncdb
 
-- name: Run Django database migrations
-  django_manage:
-    command: migrate
-    app_path: "{{ project_path }}"
-    virtualenv: "{{ virtualenv_path }}"
-    settings: "{{ django_settings_file }}"
-  environment: "{{ django_environment }}"
-  when: run_django_db_migrations is defined and run_django_db_migrations
-  tags: django.migrate
+  #- name: Run Django database migrations
+  #  django_manage:
+  #    command: migrate
+  #    app_path: "{{ project_path }}"
+  #    virtualenv: "{{ virtualenv_path }}"
+  #    settings: "{{ django_settings_file }}"
+  #  environment: "{{ django_environment }}"
+  #  when: run_django_db_migrations is defined and run_django_db_migrations
+  #  tags: django.migrate
 
-- name: Run Django collectstatic
-  django_manage:
-    command: collectstatic
-    app_path: "{{ project_path }}"
-    virtualenv: "{{ virtualenv_path }}"
-    settings: "{{ django_settings_file }}"
-  environment: "{{ django_environment }}"
-  when: run_django_collectstatic is defined and run_django_collectstatic
-  notify: restart application
-  tags: django.collectstatic
+  #- name: Run Django collectstatic
+  #  django_manage:
+  #    command: collectstatic
+  #    app_path: "{{ project_path }}"
+  #    virtualenv: "{{ virtualenv_path }}"
+  #    settings: "{{ django_settings_file }}"
+  #  environment: "{{ django_environment }}"
+  #  when: run_django_collectstatic is defined and run_django_collectstatic
+  #  notify: restart application
+  #  tags: django.collectstatic
